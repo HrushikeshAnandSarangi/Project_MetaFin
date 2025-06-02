@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./MetaFin-Backend
+      dockerfile: Dockerfile
+    container_name: django_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+    volumes:
+      - ./MetaFin-Backend:/app
+    networks:
+      - app_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  frontend:
+    build:
+      context: ./MetaFin-Frontend
+      dockerfile: Dockerfile
+    container_name: next_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - CHOKIDAR_USEPOLLING=true 
+    depends_on:
+      - backend
+    volumes:
+      - ./MetaFin-Frontend:/app
+      - /app/node_modules  
+    networks:
+      - app_network
+    stdin_open: true
+    tty: true
+
+networks:
+  app_network:
+    driver: bridge
